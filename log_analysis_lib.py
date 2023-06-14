@@ -2,15 +2,22 @@
 Library of functions that are useful for analyzing plain-text log files.
 """
 import re
+import sys
+import os
+import pandas as pd
 
 def main():
     # Get the log file path from the command line
     log_path = get_file_path_from_cmd_line()
 
-    # TODO: Use filter_log_by_regex() to investigate the gateway log per Step 5
+    # Use filter_log_by_regex() to investigate the gateway log per Step 5
+    records, captures = filter_log_by_regex(log_path, r'sshd',  print_summary=True, print_records=True)
 
-    # TODO: Use filter_log_by_regex() to extract data from the gateway log per Step 6
-
+    # Use filter_log_by_regex() to extract data from the gateway log per Step 6
+    captures = filter_log_by_regex(log_path, r'SRC=(.*?) DST=(.*?) LEN=(.*?) ')[1]
+    df = pd.DataFrame(captures)
+    df.to_csv('captures.csv', index=False, header=('Source IP', 'Destination IP', 'Length'))
+    
     return
 
 def get_file_path_from_cmd_line(param_num=1):
@@ -25,8 +32,22 @@ def get_file_path_from_cmd_line(param_num=1):
     Returns:
         str: File path
     """
-    # TODO: Implement the function body per Step 3
-    return
+    
+    # check whether the command line parameter was provided
+    num_params = len(sys.argv) - 1
+    if num_params < param_num:
+        print("Error: File path not provided.")
+        sys.exit()
+
+    # Get the file path and convert it to an absolute path
+    file_path = os.path.abspath(sys.argv[param_num])   
+
+    #check whether the file exists
+    if not os.path.isfile(file_path):
+        print(f"Error: File '{file_path}' does not exist.")
+        sys.exit()
+
+    return file_path
 
 def filter_log_by_regex(log_path, regex, ignore_case=True, print_summary=False, print_records=False):
     """Gets a list of records in a log file that match a specified regex.
